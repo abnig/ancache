@@ -1,13 +1,10 @@
 package com.nigam.ancache.core;
 
 import java.sql.Timestamp;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.nigam.ancache.exception.CacheCapacityExceededException;
@@ -83,20 +80,13 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 	 * 
 	 */
 	public Set<CacheElement<K, V>> searchByValue(V v) {
-
-		Set<K> keySet = this.cacheMap.entrySet().stream()
-		.filter(entry -> entry.getValue().equals(v))
-		.map(entry -> entry.getKey())
-		.collect(Collectors.toSet());
-
-		Set<CacheElement<K, V>> elements = cacheMap.entrySet().stream()
-		.filter(entry ->keySet.contains(entry.getKey()))
-		.map(entry -> new CacheElement<K, V>(entry.getKey(), entry.getValue())
-		.collect(Collectors.toSet()));
 		
-		return elements;
+		return this.cacheMap.entrySet().stream() 
+		.filter(entry -> entry.getValue().equals(v)) // filter entries with same value 'v' 
+		.map(entry -> new CacheElement<>(entry.getKey(), entry.getValue())) // map key and value to CacheElement 
+		.collect(Collectors.toSet()); // collect as a Set 
+		
 	}
-
 	/**
 	 * 
 	 */
