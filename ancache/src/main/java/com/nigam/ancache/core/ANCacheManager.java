@@ -94,9 +94,7 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 		.map(entry -> new CacheElement<K, V>(entry.getKey(), entry.getValue())
 		.collect(Collectors.toSet()));
 		
-		
-		
-		return null;
+		return elements;
 	}
 
 	/**
