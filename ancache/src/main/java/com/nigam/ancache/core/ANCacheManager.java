@@ -13,6 +13,7 @@ import com.nigam.ancache.model.CacheElement;
 public class ANCacheManager<K, V> implements ANCache<K, V> {
 
 	private final Integer ttlSeconds;
+	private final Long ttlNanos;
 	private final Integer capacity;
 
 	private Map<K, V> cacheMap;
@@ -22,6 +23,7 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 		super();
 		this.ttlSeconds = ttlSeconds;
 		this.capacity = capacity;
+		this.ttlNanos = this.ttlSeconds * 1000000000l;
 		this.cacheMap = new ConcurrentHashMap<K, V>();
 		this.timestampMap = new ConcurrentHashMap<K, Timestamp>();
 	}
@@ -73,20 +75,25 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 	 * 
 	 */
 	public Boolean evictByValue(V v) {
-		return null;
+
+		Set<K> keySet = this.cacheMap.entrySet().stream()
+				.filter(entry -> entry.getValue().equals(v))
+				.map(entry -> entry.getKey()).collect(Collectors.toSet());
+		
+		return this.cacheMap.keySet().removeAll(keySet);
 	}
 
 	/**
 	 * 
 	 */
 	public Set<CacheElement<K, V>> searchByValue(V v) {
-		
-		return this.cacheMap.entrySet().stream() 
-		.filter(entry -> entry.getValue().equals(v)) // filter entries with same value 'v' 
-		.map(entry -> new CacheElement<>(entry.getKey(), entry.getValue())) // map key and value to CacheElement 
-		.collect(Collectors.toSet()); // collect as a Set 
-		
+
+		return this.cacheMap.entrySet().stream()
+				.filter(entry -> entry.getValue().equals(v))
+				.map(entry -> new CacheElement<>(entry.getKey(), entry.getValue()))
+				.collect(Collectors.toSet());
 	}
+
 	/**
 	 * 
 	 */
@@ -99,6 +106,27 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 		} else {
 			throw new NoSuchElementException("No element found with key " + k.toString());
 		}
+	}
+	
+	private void removeOldEntries() {
+		final Set<K> keySet =  identifyOldEntries();
+		if(keySet != null) {
+			this.timestampMap.keySet().removeAll(keySet);
+			this.cacheMap.keySet().removeAll(keySet);
+		} else {
+			
+		}
+	}
+	
+	private Set<K> identifyOldEntries() {
+		final Timestamp ts = new Timestamp(System.nanoTime() - this.ttlNanos);
+		return this.timestampMap.entrySet().stream()
+				.filter(entry -> entry.getValue().after(ts))
+				.map(entry -> entry.getKey()).collect(Collectors.toSet());
+		
+	
+				
+		
 	}
 
 }
