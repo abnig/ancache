@@ -12,6 +12,7 @@ import com.nigam.ancache.model.CacheElement;
 
 public class ANCacheManager<K, V> implements ANCache<K, V> {
 
+	private static final long _1000000000L = 1000000000l;
 	private final Integer ttlSeconds;
 	private final Long ttlNanos;
 	private final Integer capacity;
@@ -19,11 +20,16 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 	private Map<K, V> cacheMap;
 	private final Map<K, Timestamp> timestampMap;
 
+	/**
+	 * ß
+	 * @param ttlSeconds
+	 * @param capacity
+	 */
 	public ANCacheManager(Integer ttlSeconds, Integer capacity) {
 		super();
 		this.ttlSeconds = ttlSeconds;
 		this.capacity = capacity;
-		this.ttlNanos = this.ttlSeconds * 1000000000l;
+		this.ttlNanos = this.ttlSeconds * ANCacheManager._1000000000L;
 		this.cacheMap = new ConcurrentHashMap<K, V>();
 		this.timestampMap = new ConcurrentHashMap<K, Timestamp>();
 	}
@@ -33,6 +39,11 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 	 */
 	public CacheElement<K, V> add(K k, V v) {
 		if (cacheMap.size() < this.capacity && timestampMap.size() < this.capacity) {
+			this.cacheMap.put(k, v);
+			this.timestampMap.put(k, new Timestamp(System.currentTimeMillis()));
+			return new CacheElement<K, V>(k, v);
+		} else if (cacheMap.size() >= this.capacity && timestampMap.size() >= this.capacity) {
+			removeOldEntries();
 			this.cacheMap.put(k, v);
 			this.timestampMap.put(k, new Timestamp(System.currentTimeMillis()));
 			return new CacheElement<K, V>(k, v);
@@ -97,7 +108,7 @@ public class ANCacheManager<K, V> implements ANCache<K, V> {
 	/**
 	 * 
 	 */
-	public CacheElement<K, V> searchByKey(K k) {
+	public CacheElement<K, V> get(K k) {
 		CacheElement<K, V> cacheElement = null;
 		if (this.cacheMap.containsKey(k) && this.timestampMap.containsKey(k)) {
 			this.timestampMap.put(k, new Timestamp(System.currentTimeMillis()));

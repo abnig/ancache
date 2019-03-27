@@ -19,6 +19,6 @@ public interface ANCache<K, V> {
 	
 	Set<CacheElement<K,V>> searchByValue(V v);
 	
-	CacheElement<K,V> searchByKey(K k);
+	CacheElement<K,V> get(K k);
 
 }
